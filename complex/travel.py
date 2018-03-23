@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'				# clears Tensorflow CPU for my mac Unix terminal
@@ -8,7 +7,7 @@ os.system('cls' if os.name == 'nt' else 'clear')	# clears the terminal window sc
 import pickle
 
 from weightGen import *
-from layers import transmit
+from layers import transmitComplex
 from costMask import costMask
 
 np.random.seed(7)		# seeding the random number generator to reproduce identical results
@@ -72,7 +71,7 @@ Y_tens = tf.placeholder(dtype = tf.float64, shape = [sampN,featN])
 # compute least squares cost for each sample and then average out their costs
 print("Building Cost Function (Least Squares) ... ... ...")
 
-Yhat_tens = transmit(X_tens, W_tens, layers)		# prediction function
+Yhat_tens = transmitComplex(X_tens, W_tens, layers)		# prediction function
 
 Yhat_masked = costMask(Yhat_tens - Y_tens, start, end)	# masking region "we don't know" for the cost
 
@@ -94,7 +93,8 @@ print("Done!\n")
 epochs = 2000
 loss_tolerance = 1e-8
 
-with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))) as sess:
+# with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))) as sess:
+with tf.Session() as sess:
 	sess.run( tf.global_variables_initializer() )
 	
 	print("Tensor X:")		# show info. for X
