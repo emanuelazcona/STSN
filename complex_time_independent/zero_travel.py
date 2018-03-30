@@ -1,13 +1,21 @@
+'''
+This script is for a 2-component complex model with real weights.
+
+!!!!!!!!!!!!!!!!!! NOTE !!!!!!!!!!!!!!!!!!
+The imaginary component of each data-point is 0, hence the "zero" in the name of this file.
+'''
+
 import numpy as np
+
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'				# clears Tensorflow CPU for my mac Unix terminal
+os.system('cls' if os.name == 'nt' else 'clear')	# clears the terminal window screen (clc equiv. to MATLAB)
+
 import pickle
 
 from weightGen import *
-from layers import transmitTimeDep
+from layers import transmitComplex
 from costMask import costMask
-
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'				# clears Tensorflow CPU for my mac Unix terminal
-os.system('cls' if os.name == 'nt' else 'clear')	# clears the terminal window screen (clc equiv. to MATLAB)
 
 np.random.seed(7)		# seeding the random number generator to reproduce identical results
 tf.set_random_seed(7)	# seed Tensorflow random numebr generator as well
@@ -26,7 +34,7 @@ if len( userScatter ) is 1:
 if len( userTime ) is 1:
 	userTime = "0" + userTime
 
-fileName = 'data/scatter' + userScatter + '_T' + userTime + '_tc20_all_'
+fileName = 'zero_data/scatter' + userScatter + '_T' + userTime + '_all_'
 X = np.transpose( np.genfromtxt(fileName + 'in.csv', delimiter = ',') )
 Y = np.transpose( np.genfromtxt(fileName + 'out.csv', delimiter = ',') )
 
@@ -36,6 +44,7 @@ Y = np.transpose( np.genfromtxt(fileName + 'out.csv', delimiter = ',') )
 
 
 #------------------------ Extract Number of Layers ------------------------#
+
 # Print Information
 print("This model contains:")
 print("\t- " + userTime + " time units")
@@ -46,15 +55,15 @@ sampN, featN = X.shape	# sampN: number of training samples, featN: features per 
 
 
 #----------- Random Weight Generation For Material -----------#
-wN = featN//2	# number of transmission weights
+wN = featN//4	# number of transmission weights
 start = int(input("Starting Weight Index of Mask: "))	# starting index (1 <--> wN)
 end = int(input("Ending Weight Index of Mask: "))		# ending index (start <--> wN)
 
-print("\t- " + str(wN*layers) + " total weights")
-print("\t- " + str((end-start+1)*layers) + " trainable weights out of total weights (masked region)\n")
+print("\t- " + str(wN) + " total weights")
+print("\t- " + str(end-start+1) + " trainable weights out of total weights (masked region)\n")
 
 # extract arrays for trainable & frozen weights
-W_left, W_train, W_right = weightCreation(start, end, wN, layers)
+W_left, W_train, W_right = weightCreation(start, end, wN)
 W_tens = weightConcat(W_left, W_train, W_right)
 
 
@@ -69,12 +78,12 @@ Y_tens = tf.placeholder(dtype = tf.float64, shape = [sampN,featN])
 # compute least squares cost for each sample and then average out their costs
 print("Building Cost Function (Least Squares) ... ... ...")
 
-Yhat_tens = transmitTimeDep(X_tens, W_tens, layers)	# prediction function
+Yhat_tens = transmitComplex(X_tens, W_tens, layers)		# prediction function
 
 Yhat_masked = costMask(Yhat_tens - Y_tens, start, end)	# masking region "we don't know" for the cost
 
 # perform least squares by squaring l2-norm (normalizing the cost by the number of known points)
-least_squares = tf.norm(Yhat_masked, ord=2)**2 / (featN - ((end*2) - (start*2-1) + 1))	#
+least_squares = tf.norm(Yhat_masked, ord=2)**2 / (featN - ((end*4) - (start*4-3) + 1))	#
 print("Done!\n")
 
 
@@ -121,11 +130,11 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 		currStatus = [loss_value]	# status of the network for the current epoch
 
 		# add the weights to the status of the network for current epoch
-		currStatus.append(W_tens.eval())
+		for w in W_tens.eval()[0]:
+			currStatus.append(w)
 
 		# saves objects for every iteration
-		fileFolder = "results/n" + userScatter + "_T" + userTime + "_tc20_" + "_Mask_" + str(start) + "_" + str(end) + "_lr{0:.3f}".format(lr)
-		# fileFolder = "results/n" + userScatter + "_T" + userTime + "_Mask_" + str(start) + "_" + str(end) + "_lr{0:.3f}".format(lr)
+		fileFolder = "results/zero/n" + userScatter + "_T" + userTime + "_Mask_" + str(start) + "_" + str(end) + "_lr{0:.3f}".format(lr)
 
 		if not os.path.exists(fileFolder):
 			os.makedirs(fileFolder)
@@ -134,10 +143,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 
 		# print information for the user about loss and weights
 		print("Epoch: " + str(i) + "\t\tLoss: " + str(loss_value))
-		print("Peek Weights @ Time Unit 15: ")
-		print(W_tens[15,:].eval())
-		print("\nPeek Weights @ Time Unit 25: ")
-		print(W_tens[25,:].eval())
+		print(W_tens.eval())
 
 		if loss_value <= loss_tolerance:
 			break

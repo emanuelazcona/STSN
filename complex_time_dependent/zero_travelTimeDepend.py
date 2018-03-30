@@ -3,7 +3,7 @@ import os
 import pickle
 
 from weightGen import *
-from layers import transmitTimeDep
+from layers import transmitComplex
 from costMask import costMask
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'				# clears Tensorflow CPU for my mac Unix terminal
@@ -18,15 +18,14 @@ tf.set_random_seed(7)	# seed Tensorflow random numebr generator as well
 userScatter = str( input("Scatter-points: ") )
 userTime = str( input("Time units: ") )
 
-layers = int(userTime)	# number of scatter/prop. layers to navigate through
-expectedScatter = int(userScatter)
+layers = int(userTime)	# number of time units
 
 if len( userScatter ) is 1:
 	userScatter = "0" + userScatter
 if len( userTime ) is 1:
 	userTime = "0" + userTime
 
-fileName = 'data/scatter' + userScatter + '_T' + userTime + '_tc20_all_'
+fileName = 'zero_data/scatter' + userScatter + '_T' + userTime + '_tc20_all_'
 X = np.transpose( np.genfromtxt(fileName + 'in.csv', delimiter = ',') )
 Y = np.transpose( np.genfromtxt(fileName + 'out.csv', delimiter = ',') )
 
@@ -46,7 +45,7 @@ sampN, featN = X.shape	# sampN: number of training samples, featN: features per 
 
 
 #----------- Random Weight Generation For Material -----------#
-wN = featN//2	# number of transmission weights
+wN = featN//4	# number of transmission weights
 start = int(input("Starting Weight Index of Mask: "))	# starting index (1 <--> wN)
 end = int(input("Ending Weight Index of Mask: "))		# ending index (start <--> wN)
 
@@ -69,12 +68,12 @@ Y_tens = tf.placeholder(dtype = tf.float64, shape = [sampN,featN])
 # compute least squares cost for each sample and then average out their costs
 print("Building Cost Function (Least Squares) ... ... ...")
 
-Yhat_tens = transmitTimeDep(X_tens, W_tens, layers)	# prediction function
+Yhat_tens = transmitComplex(X_tens, W_tens, layers)	# prediction function
 
 Yhat_masked = costMask(Yhat_tens - Y_tens, start, end)	# masking region "we don't know" for the cost
 
 # perform least squares by squaring l2-norm (normalizing the cost by the number of known points)
-least_squares = tf.norm(Yhat_masked, ord=2)**2 / (featN - ((end*2) - (start*2-1) + 1))	#
+least_squares = tf.norm(Yhat_masked, ord=2)**2 / (featN - ((end*4) - (start*4-3) + 1))	#
 print("Done!\n")
 
 
@@ -121,7 +120,8 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 		currStatus = [loss_value]	# status of the network for the current epoch
 
 		# add the weights to the status of the network for current epoch
-		currStatus.append(W_tens.eval())
+		for j in range(layers):
+			currStatus.append(W_tens.eval())
 
 		# saves objects for every iteration
 		fileFolder = "results/n" + userScatter + "_T" + userTime + "_tc20_" + "_Mask_" + str(start) + "_" + str(end) + "_lr{0:.3f}".format(lr)
@@ -135,9 +135,9 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 		# print information for the user about loss and weights
 		print("Epoch: " + str(i) + "\t\tLoss: " + str(loss_value))
 		print("Peek Weights @ Time Unit 15: ")
-		print(W_tens[15,:].eval())
+		print(W_train[15,:].eval())
 		print("\nPeek Weights @ Time Unit 25: ")
-		print(W_tens[25,:].eval())
+		print(W_train[25,:].eval())
 
 		if loss_value <= loss_tolerance:
 			break
