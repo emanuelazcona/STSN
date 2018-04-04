@@ -52,7 +52,7 @@ sampN, featN = X.shape	# sampN: number of training samples, featN: features per 
 wN = featN//2	# number of transmission weights
 start = int(input("Starting Weight Index of Mask: "))	# starting index (1 <--> wN)
 end = int(input("Ending Weight Index of Mask: "))		# ending index (start <--> wN)
-
+start
 print("\t- " + str(wN) + " total weights")
 print("\t- " + str(end-start+1) + " trainable weights out of total weights (masked region)\n")
 
