@@ -2,10 +2,10 @@
 import numpy as np
 
 # clears numpy warning about floats
-import sys
-for i in range(3):    # Add this for loop.
-    sys.stdout.write('\033[F') # Back to previous line.
-    sys.stdout.write('\033[K') # Clear line.
+# import sys
+# for i in range(3):    # Add this for loop.
+#     sys.stdout.write('\033[F') # Back to previous line.
+#     sys.stdout.write('\033[K') # Clear line.
 
 # terminal/system commands
 import os

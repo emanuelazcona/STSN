@@ -10,7 +10,7 @@ def create_weights(start, end, wN):	# create arrays for frozen and trainable wei
 		if start > 1:
 
 			# create vector of "frozen" ones representing free-space
-			wL = tf.ones(shape = [start-1], dtype = tf.float64)
+			wL = tf.zeros(shape = [start-1], dtype = tf.float64)
 
 		# otherwise if it is 1, there are no frozen weights less than the starting index
 		elif start is 1:
@@ -22,16 +22,16 @@ def create_weights(start, end, wN):	# create arrays for frozen and trainable wei
 		if end < wN:
 
 			# create vector of untrainable ones to the right of the mask
-			wR = tf.ones(shape = [wN - end], dtype = tf.float64)
+			wR = tf.zeros(shape = [wN - end], dtype = tf.float64)
 
 		# otherwise if it is the last index, no weights to the right of the trainable weights
 		elif end is wN:
 			wR = None
 		else:
-			raise ValueError("Ending index, start, must be between Starting index, start and (# of features)/2")
+			raise ValueError("Ending index, start, must be between Starting index, start and (# of features)/3")
 
 		# create trainable weights after creating untrainable weights
-		wT = tf.Variable(tf.ones(shape = [end - start + 1], dtype = tf.float64))
+		wT = tf.Variable(tf.zeros(shape = [end - start + 1], dtype = tf.float64))
 
 		return wL, wT, wR
 	

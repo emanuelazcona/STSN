@@ -1,0 +1,6 @@
+1 scatter - @ pos 50
+2 scatter - @ pos 50 and 52
+3 scatter - @ pos 50 and 52 and 54
+4 scatter - @ pos 50 and 52 and 54 and 56
+
+all weight values at scatter locations: 6
