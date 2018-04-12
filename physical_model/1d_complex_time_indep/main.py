@@ -15,12 +15,12 @@ if len(user_time) is 1:
 	user_time = "0" + user_time
 
 fileName = "data/scatter" + user_scatter + "_T" + user_time + "_mask_50_60_"
-X = np.genfromtxt(fileName + "in.csv", delimiter = ",")		# input data
-Y = np.genfromtxt(fileName + "out.csv", delimiter = ",")	# output data
 
-# fileName = "data/scatter" + user_scatter + "_T" + user_time + "_mask_02_03_"	# FOR TESTING
-# X = np.ones((12,3)) # FOR TESTING
-# Y = np.ones((12,3)) # FOR TESTING
+# X = np.genfromtxt(fileName + "in.csv", delimiter = ",")	# input data
+# Y = np.genfromtxt(fileName + "out.csv", delimiter = ",")	# output data
+
+X = np.random.random((600,246)) # FOR TESTING
+Y = np.random.random((600,246)) # FOR TESTING
 
 
 
@@ -33,7 +33,7 @@ featN,sampN = X.shape
 
 
 #----------- Weight Generation (Always >= 0) -----------#
-wN = featN//3	# number of weights
+wN = featN//6	# number of weights
 
 mask_start = int( fileName[-6:-4] )
 mask_end = int( fileName[-3:-1] )
@@ -54,7 +54,7 @@ scatter = create_scatter_matrix(W_tens)		# create scatter matrix placeholder
 X_tens = tf.placeholder(dtype = tf.float64, shape = [featN, sampN])	# placeholder for input
 Y_tens = tf.placeholder(dtype = tf.float64, shape = [featN, sampN])	# placeholder for ground truth output
 
-Yhat_tens = predict(X_tens, scatter, transfer, layers)	# placeholder function for prediction
+Yhat_tens = predict_complex(X_tens, scatter, transfer, layers)	# placeholder function for prediction
 
 
 
@@ -63,8 +63,7 @@ print("Building Cost Function (Least Squares) ... ... ...")
 error = mask(Yhat_tens - Y_tens, mask_start, mask_end)	# placeholder for error
 least_squares = tf.norm(error, ord=2)**2				# placeholder for least squares cost
 
-not_masked_N = (wN - (mask_end-mask_start+1))*3		# number of data points NOT in the masked region
-
+not_masked_N = (wN - (mask_end-mask_start+1))*6		# number of data points NOT in the masked region
 MSE = least_squares / not_masked_N		# our cost is mean squared error (least_squares / N)
 										# where N is the number of points calculated upon
 print("Done!\n")
@@ -73,15 +72,16 @@ print("Done!\n")
 
 #--------------------------- Define Optimizer --------------------------#
 print("Building Optimizer ... ... ...")
-lr = 0.05	# learning rate of our model
+lr = 0.08	# learning rate of our model
 
 # adaptive momentum optimizer definition (predefined in Tensorflow)
-train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss = MSE, var_list = [W_train])
+train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(MSE, var_list = [W_train])
 print("Done!\n")
 
 
 
 #--------------------------- Training --------------------------#
+
 # saves objects for every iteration
 fileFolder = "results/" + fileName[5:] + "lr{0:.3f}".format(lr)
 
@@ -107,16 +107,17 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 
 	print("Tensor Y: ")		# show info. for Y
 	print(Y)
-	print("\n")
+	print("")
 
 	print("--------- Starting Training ---------\n")
-	epochs = int( 2 )		# number training epochs to look at data
-	loss_tolerance = 1e-15	# set an MSE tolerance for which to stop training once reached
+
+	epochs = int( 2e4 )		# number training epochs to look at data
+	loss_tolerance = 1e-9	# set an MSE tolerance for which to stop training once reached
 	for i in range(1, epochs+1):
 
 		# run X and Y dynamically into the network per iteration
 		_, loss_value = sess.run([train_op, MSE], feed_dict = {X_tens: X, Y_tens: Y})
-
+		
 		# clip training negative variables to 0
 		W_train = tf.nn.relu(W_train)
 

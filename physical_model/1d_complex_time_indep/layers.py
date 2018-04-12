@@ -4,7 +4,7 @@ from scipy.sparse import block_diag
 
 # ---------------------- Transfer Matrix Generation ----------------------#
 def create_transfer_matrix(wN):
-
+	
 	transfer = np.zeros((wN*3,wN*3))
 
 	for j in range(wN):
@@ -61,9 +61,23 @@ def predict(x, scatter, transfer, N):
 
 	return out
 
+def predict_complex(x, scatter, transfer, N):
+
+	featN, sampN = x.shape.as_list()
+
+	x_real = x[:featN//2,:]
+	x_imag = x[featN//2:,:]
+
+	y_real = predict(x_real, scatter, transfer, N)
+	y_imag = predict(x_imag, scatter, transfer, N)
+
+	return tf.concat([y_real, y_imag], axis = 0)
 
 
-def mask(x,start,end):		# omit the masked region from the cost (have no info. of output in the material)
+
+#-------------------------- Zero-Masking ------------------------#
+def mask(x,start,end):		
+# omit the masked region from the cost (have no info. of output in the material)
 	
 	a = start*3 - 2		# forward part of wave associated to weight at index: start
 	b = end*3			# backward part of wave associated to weight at index: end
@@ -72,12 +86,19 @@ def mask(x,start,end):		# omit the masked region from the cost (have no info. of
 
 	# create matrix of ones and zeros where we purposely zero-out (element-wise) for certain rows of x
 
-	out_top = tf.ones(shape = [a-1,sampN], dtype = tf.float64)			# columns that are 1
-	out_mid = tf.zeros(shape = [b-a+1,sampN], dtype = tf.float64)		# columns that are 0
-	out_bottom = tf.ones(shape = [featN-b,sampN], dtype = tf.float64)	# columns that are 1
+	out_top_real = tf.ones(shape = [a-1,sampN], dtype = tf.float64)				# columns that are 1
+	out_mid_real = tf.zeros(shape = [b-a+1,sampN], dtype = tf.float64)			# columns that are 0
+	out_bottom_real = tf.ones(shape = [featN//2-b,sampN], dtype = tf.float64)	# columns that are 1
+
+	out_top_imag = tf.ones(shape = [a-1,sampN], dtype = tf.float64)				# columns that are 1
+	out_mid_imag = tf.zeros(shape = [b-a+1,sampN], dtype = tf.float64)			# columns that are 0
+	out_bottom_imag = tf.ones(shape = [featN//2-b,sampN], dtype = tf.float64)	# columns that are 1
 
 	# concatenate these parts to create a matrix that zeros out parts of x
-	out = tf.concat([out_top, out_mid, out_bottom], axis = 0)
+	out_real = tf.concat([out_top_real, out_mid_real, out_bottom_real], axis = 0)
+	out_imag = tf.concat([out_top_imag, out_mid_imag, out_bottom_imag], axis = 0)
+
+	out = tf.concat([out_real, out_imag], axis = 0)
 
 	# return x with parts of itself being zeroed out
 	return tf.multiply(out,x)
