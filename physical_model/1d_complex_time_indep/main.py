@@ -14,9 +14,9 @@ if len(user_scatter) is 1:
 if len(user_time) is 1:
 	user_time = "0" + user_time
 
-fileName = "data/scatter" + user_scatter + "_T" + user_time + "_mask_50_60_"
-X = np.genfromtxt(fileName + "in.csv", delimiter = ",")	# input data
-Y = np.genfromtxt(fileName + "out.csv", delimiter = ",")	# output data
+name = "data/scatter" + user_scatter + "_T" + user_time + "_mask_50_60_"
+X = np.genfromtxt(name + "in.csv", delimiter = ",")	# input data
+Y = np.genfromtxt(name + "out.csv", delimiter = ",")	# output data
 
 # X = np.random.random((600,246)) # FOR TESTING
 # Y = np.random.random((600,246)) # FOR TESTING
@@ -34,8 +34,8 @@ featN,sampN = X.shape
 #----------- Weight Generation (Always >= 0) -----------#
 wN = featN//6	# number of weights
 
-mask_start = int( fileName[-6:-4] )
-mask_end = int( fileName[-3:-1] )
+mask_start = int( name[-6:-4] )
+mask_end = int( name[-3:-1] )
 
 # extract arrays for trainable & frozen weights
 W_left, W_train, W_right = create_weights(mask_start, mask_end, wN)
@@ -75,7 +75,6 @@ lr = 0.08	# learning rate of our model
 
 # adaptive momentum optimizer definition (predefined in Tensorflow)
 train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(MSE, var_list = [W_train])
-clip_op = tf.nn.relu(W_train)
 print("Done!\n")
 
 
@@ -83,11 +82,11 @@ print("Done!\n")
 #--------------------------- Training --------------------------#
 
 # saves objects for every iteration
-fileFolder = "results/" + fileName[5:] + "lr{0:.3f}".format(lr)
+folder = "results/" + name[5:] + "lr{0:.3f}".format(lr)
 
 # if the results folder does not exist for the current model, create it
-if not os.path.exists(fileFolder):
-		os.makedirs(fileFolder)
+if not os.path.exists(folder):
+		os.makedirs(folder)
 
 with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))) as sess:
 	sess.run( tf.global_variables_initializer() )
@@ -117,20 +116,14 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 
 		# run X and Y dynamically into the network per iteration
 		_, loss_value = sess.run([train_op, MSE], feed_dict = {X_tens: X, Y_tens: Y})
-		
-		# clip training negative variables to 0
-		sess.run( clip_op )
+		W_tens = tf.nn.relu(W_tens)
+		W_train = tf.nn.relu(W_train)
 
 		# save loss and current weights every 5 epochs
 		if i % 5 is 0:
-			currStatus = [loss_value, W_tens.eval()]
-
-			fileName = "/epoch" + str(i) + "_lossAndWeights.p"
-			pickle.dump( currStatus, open( fileFolder + fileName, "wb" ) )
-
-			# print information for the user about loss and weights
-			print("Epoch: " + str(i) + "\t\tLoss: " + str(loss_value))
-			print(W_tens.eval())
+			weights = W_tens.eval()
+			save_data(folder, name, i, (loss_value, weights))
+			print_data(i, loss_value, weights)
 
 			if loss_value <= loss_tolerance:
 				break
