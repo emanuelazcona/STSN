@@ -110,7 +110,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 	print("\n")
 
 	print("--------- Starting Training ---------\n")
-	epochs = int( 2 )		# number training epochs to look at data
+	epochs = int( 2e4 )		# number training epochs to look at data
 	loss_tolerance = 1e-15	# set an MSE tolerance for which to stop training once reached
 	for i in range(1, epochs+1):
 
@@ -118,7 +118,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 		_, loss_value = sess.run([train_op, MSE], feed_dict = {X_tens: X, Y_tens: Y})
 
 		# clip training negative variables to 0
-		W_train = tf.nn.relu(W_train)
+		W_tens = tf.nn.relu(W_tens)
 
 		# save loss and current weights every 5 epochs
 		if i % 5 is 0:

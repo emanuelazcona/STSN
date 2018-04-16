@@ -15,12 +15,11 @@ if len(user_time) is 1:
 	user_time = "0" + user_time
 
 fileName = "data/scatter" + user_scatter + "_T" + user_time + "_mask_50_60_"
+X = np.genfromtxt(fileName + "in.csv", delimiter = ",")	# input data
+Y = np.genfromtxt(fileName + "out.csv", delimiter = ",")	# output data
 
-# X = np.genfromtxt(fileName + "in.csv", delimiter = ",")	# input data
-# Y = np.genfromtxt(fileName + "out.csv", delimiter = ",")	# output data
-
-X = np.random.random((600,246)) # FOR TESTING
-Y = np.random.random((600,246)) # FOR TESTING
+# X = np.random.random((600,246)) # FOR TESTING
+# Y = np.random.random((600,246)) # FOR TESTING
 
 
 
@@ -76,6 +75,7 @@ lr = 0.08	# learning rate of our model
 
 # adaptive momentum optimizer definition (predefined in Tensorflow)
 train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(MSE, var_list = [W_train])
+clip_op = tf.nn.relu(W_train)
 print("Done!\n")
 
 
@@ -119,7 +119,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 		_, loss_value = sess.run([train_op, MSE], feed_dict = {X_tens: X, Y_tens: Y})
 		
 		# clip training negative variables to 0
-		W_train = tf.nn.relu(W_train)
+		sess.run( clip_op )
 
 		# save loss and current weights every 5 epochs
 		if i % 5 is 0:
