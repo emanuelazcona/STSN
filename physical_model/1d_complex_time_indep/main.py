@@ -88,6 +88,8 @@ folder = "results/" + name[5:] + "lr{0:.3f}".format(lr)
 if not os.path.exists(folder):
 		os.makedirs(folder)
 
+
+
 with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))) as sess:
 	sess.run( tf.global_variables_initializer() )
 
@@ -112,6 +114,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 
 	epochs = int( 2e4 )		# number training epochs to look at data
 	loss_tolerance = 1e-9	# set an MSE tolerance for which to stop training once reached
+
 	for i in range(1, epochs+1):
 
 		# run X and Y dynamically into the network per iteration
@@ -124,6 +127,8 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 			weights = W_tens.eval()
 			save_data(folder, name, i, (loss_value, weights))
 			print_data(i, loss_value, weights)
+			plot_data(i, loss_value, weights, layers)
+
 
 			if loss_value <= loss_tolerance:
 				break

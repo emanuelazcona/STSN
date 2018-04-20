@@ -9,7 +9,7 @@ import numpy as np
 
 # terminal/system commands
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='3'				# clears Tensorflow CPU for my mac Unix terminal
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'				# clears Tensorflow CPU for my mac Unix terminal
 os.system('cls' if os.name == 'nt' else 'clear')	# clears the terminal window screen (clc equiv. to MATLAB)
 
 # storing weights and associated cost during training
