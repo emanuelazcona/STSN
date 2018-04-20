@@ -30,7 +30,12 @@ def plot_data(epoch, loss, weights, time):
 	W = weights.T
 	wN = np.shape(W)[0]
 	W = np.tile(W, (1,time))
-	im = plt.imshow(W, cmap = plt.cm.jet, interpolation='none', aspect="auto", extent = [1,time, wN, 1])
+	im = plt.imshow(W,
+					cmap = plt.cm.jet, 
+					interpolation='none',
+					aspect="auto",
+					extent = [1,time, wN, 1])
+	
 	plt.title("Static Weights per Time Unit\nEpoch: " + str(epoch) + ",\t Loss: " + str(loss))
 	if cbar:
 		cbar.update_bruteforce(im)
