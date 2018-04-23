@@ -15,11 +15,8 @@ if len(user_time) is 1:
 	user_time = "0" + user_time
 
 name = "data/scatter" + user_scatter + "_T" + user_time + "_mask_50_60_"
-X = np.genfromtxt(name + "in.csv", delimiter = ",")	# input data
+X = np.genfromtxt(name + "in.csv", delimiter = ",")		# input data
 Y = np.genfromtxt(name + "out.csv", delimiter = ",")	# output data
-
-# X = np.random.random((600,246)) # FOR TESTING
-# Y = np.random.random((600,246)) # FOR TESTING
 
 
 
