@@ -21,9 +21,7 @@ def create_transfer_matrix(wN):
 
 
 # ---------------------- Scatter Matrix Generation ----------------------#
-def create_scatter_matrix(weights):
-
-	N = weights[0].shape.as_list()[1]	# extract number of weights, N
+def create_scatter_matrix(weights,N):
 
 	scatter = []
 	for w in weights:

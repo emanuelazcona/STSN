@@ -33,6 +33,8 @@ wN = featN//6	# number of weights
 
 mask_start = int( name[-6:-4] )
 mask_end = int( name[-3:-1] )
+# mask_start = 50
+# mask_end = 60
 
 # extract arrays for trainable & frozen weights
 W_left, W_train, W_right = create_weights(mask_start, mask_end, wN, layers)
@@ -41,8 +43,8 @@ W_tens = concat_weights(W_left, W_train, W_right)
 print("\t- " + str(wN*layers) + " total weights")
 print("\t- " + str(layers*(mask_end-mask_start+1)) + " trainable weights (masked region)\n")
 
-transfer = create_transfer_matrix(wN)	# create transfer matrix placeholder
-scatter = create_scatter_matrix(W_tens)		# create scatter matrix placeholder
+transfer = create_transfer_matrix(wN)			# create transfer matrix placeholder
+scatter = create_scatter_matrix(W_tens,wN)		# create scatter matrix placeholder
 
 
 
@@ -68,10 +70,10 @@ print("Done!\n")
 
 #--------------------------- Define Optimizer --------------------------#
 print("Building Optimizer ... ... ...")
-lr = 0.08	# learning rate of our model
+lr = 0.1	# learning rate of our model
 
 # adaptive momentum optimizer definition (predefined in Tensorflow)
-train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(MSE, var_list = W_train)
+train_op = tf.train.AdamOptimizer(lr).minimize(MSE, var_list = W_train)
 print("Done!\n")
 
 
@@ -101,7 +103,7 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 	print("--------- Starting Training ---------\n")
 
 	epochs = int( 2e4 )		# number training epochs to look at data
-	loss_tolerance = 1e-9	# set an MSE tolerance for which to stop training once reached
+	loss_tolerance = 1e-13	# set an MSE tolerance for which to stop training once reached
 
 	for i in range(1, epochs+1):
 
@@ -109,8 +111,8 @@ with tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=Tru
 		_, loss_value = sess.run([train_op, MSE], feed_dict = {X_tens: X, Y_tens: Y})
 
 		for n in range(layers):
-			W_tens[n] = tf.nn.relu(W_tens[n])
-			W_train[n] = tf.nn.relu(W_train[n])
+			W_tens = [tf.nn.relu(w) for w in W_tens]
+			W_train = [tf.nn.relu(w) for w in W_train]
 
 		# save loss and current weights every 5 epochs
 		if i % 5 is 0:
